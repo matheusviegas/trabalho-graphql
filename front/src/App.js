@@ -6,7 +6,7 @@ import {
   Redirect
 } from "react-router-dom";
 import ContentWrapper from "./components/ContentWrapper";
-import Books from "./screens/Books";
+import Dashboard from "./screens/Dashboard";
 import Login from "./screens/Login";
 import Register from "./screens/Register";
 
@@ -18,9 +18,9 @@ function App() {
     <ApolloProvider client={client}>
       <Router>
         <Switch>
-          <Route path="/books">
+          <Route path="/dashboard">
             <ContentWrapper>
-              <Books />
+              <Dashboard />
             </ContentWrapper>
           </Route>
           <Route path="/login">

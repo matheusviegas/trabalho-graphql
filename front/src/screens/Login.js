@@ -50,7 +50,7 @@ function Login({ form: { getFieldDecorator, validateFields, setFields } }) {
         if (data.signin.token) {
           localStorage.setItem("token", data.signin.token);
           localStorage.setItem("user", JSON.stringify(data.signin.user));
-          history.push("/books");
+          history.push("/dashboard");
         }
       }
     });

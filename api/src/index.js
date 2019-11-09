@@ -14,7 +14,7 @@ const typeDefs = gql`
     EMPLOYEE
   }
 
-  directive @auth(role: RoleEnum) on OBJECT | FIELD_DEFINITION
+  directive @auth(role: [RoleEnum]) on OBJECT | FIELD_DEFINITION
 
   type User {
     id: ID!
@@ -32,18 +32,19 @@ const typeDefs = gql`
   }
 
   type Query {
-    allUsers: [User] @auth(role: ADMIN)
-    allTimes: [RegisteredTime] @auth(role: ADMIN)
+    allUsers: [User] @auth(role: [ADMIN])
+    allTimes: [RegisteredTime] @auth(role: [EMPLOYEE, ADMIN])
+    myTimes: [RegisteredTime] @auth(role: [EMPLOYEE])
   }
 
   type Mutation {
     createRegisteredTime(data: CreateRegisteredTimeInput): RegisteredTime
-      @auth(role: EMPLOYEE)
+      @auth(role: [EMPLOYEE])
     updateRegisteredTime(
       id: ID!
       data: UpdateRegisteredTimeInput
-    ): RegisteredTime @auth(role: ADMIN)
-    deleteRegisteredTime(id: ID!): Boolean @auth(role: ADMIN)
+    ): RegisteredTime @auth(role: [ADMIN])
+    deleteRegisteredTime(id: ID!): Boolean @auth(role: [ADMIN])
 
     createUser(data: CreateUserInput): User
     updateUser(id: ID!, data: UpdateUserInput): User
@@ -77,7 +78,6 @@ const typeDefs = gql`
 
   input CreateRegisteredTimeInput {
     time_registered: String!
-    userId: ID!
   }
 
   input UpdateRegisteredTimeInput {
@@ -87,18 +87,38 @@ const typeDefs = gql`
 
 const resolver = {
   Query: {
-    allTimes() {
+    /*allTimes() {
       return RegisteredTime.findAll({ include: [User] });
+    },*/
+    async allUsers() {
+      return await User.findAll({ include: [RegisteredTime] });
     },
-    allUsers() {
-      return User.findAll({ include: [RegisteredTime] });
+    async allTimes(parent, body, context, info) {
+      const { userId: id } = context;
+
+      const userBD = await User.findByPk(id);
+
+      if (userBD && userBD.role === "ADMIN") {
+        return RegisteredTime.findAll({ include: [User] });
+      } else {
+        return RegisteredTime.findAll({
+          include: [
+            {
+              association: "user",
+              where: {
+                id
+              }
+            }
+          ]
+        });
+      }
     }
   },
   Mutation: {
     async createRegisteredTime(parent, body, context, info) {
       const user = await User.findOne({
         where: {
-          id: body.data.userId
+          id: context.userId
         }
       });
 

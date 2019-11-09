@@ -50,9 +50,11 @@ class AuthDirective extends SchemaDirectiveVisitor {
           where: { id }
         });
 
-        if (user.role !== requiredRole) {
+        if (!requiredRole.includes(user.role)) {
           throw new AuthenticationError("Você não tem permissão");
         }
+
+        context.userId = id;
 
         return resolve.apply(this, args);
       };
